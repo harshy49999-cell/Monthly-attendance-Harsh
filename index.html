@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Tracker — MBBS Phase II</title>
+<style>
+  :root{
+    --paper:#eaf2fb;
+    --ink:#1f2420;
+    --ink-soft:#5a6058;
+    --line:#c9d9e6;
+    --rail:#2e3a32;
+    --present:#3f6b4a;
+    --present-bg:#e3ece4;
+    --absent:#a1443a;
+    --absent-bg:#f4e2df;
+    --holiday:#8a7a4d;
+    --holiday-bg:#efe8d3;
+    --accent:#2e3a32;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family: 'Iowan Old Style','Palatino Linotype',Georgia,serif;
+    background:var(--paper);
+    color:var(--ink);
+    padding:28px 18px 80px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+
+  header.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:16px;
+    border-bottom:2px solid var(--rail);
+    padding-bottom:14px;
+    margin-bottom:22px;
+  }
+  header.top h1{
+    font-size:1.5rem;
+    margin:0 0 6px;
+    font-weight:600;
+    letter-spacing:.2px;
+  }
+  header.top .sub{
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.8rem;
+    color:var(--ink-soft);
+  }
+  .month-field-wrap{
+    display:flex;
+    flex-direction:column;
+  }
+  .month-field{
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+  }
+  .month-field label{
+    display:block;
+    font-size:.7rem;
+    color:var(--ink-soft);
+    margin-bottom:3px;
+  }
+  .month-field select{
+    font-family: 'Iowan Old Style',Georgia,serif;
+    font-size:1.05rem;
+    border:none;
+    border-bottom:1.5px solid var(--rail);
+    background:transparent;
+    padding:3px 24px 3px 2px;
+    width:220px;
+    color:var(--ink);
+    appearance:none;
+    -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%235a6058' stroke-width='1.5' fill='none'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 4px center;
+  }
+  .month-field select:focus{outline:none;border-bottom-color:var(--present);}
+  .add-month-btn{
+    background:none;
+    border:1.5px solid var(--rail);
+    color:var(--rail);
+    width:28px;height:28px;
+    border-radius:50%;
+    font-size:1rem;
+    line-height:1;
+    cursor:pointer;
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  .add-month-btn:hover{background:var(--present);border-color:var(--present);color:#fff;}
+  .new-month-row{
+    display:none;
+    align-items:center;
+    gap:6px;
+    margin-top:6px;
+  }
+  .new-month-row.open{display:flex;}
+  .new-month-row input{
+    font-family: 'Iowan Old Style',Georgia,serif;
+    font-size:.95rem;
+    border:none;
+    border-bottom:1.5px solid var(--rail);
+    background:transparent;
+    padding:3px 2px;
+    width:200px;
+    color:var(--ink);
+  }
+  .new-month-row input:focus{outline:none;border-bottom-color:var(--present);}
+  .new-month-row button{
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.75rem;
+    border:1.5px solid var(--rail);
+    background:var(--rail);
+    color:#fff;
+    padding:5px 10px;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  .new-month-row button.cancel{
+    background:transparent;
+    color:var(--rail);
+  }
+
+  .week-nav{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  .week-nav button{
+    background:var(--rail);
+    color:#fff;
+    border:none;
+    width:30px;height:30px;
+    border-radius:50%;
+    font-size:1rem;
+    cursor:pointer;
+    line-height:1;
+  }
+  .week-nav button:hover{background:var(--present);}
+  .week-nav .label{
+    font-size:.85rem;
+    min-width:64px;
+    text-align:center;
+  }
+
+  .day-block{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:6px;
+    margin-bottom:14px;
+    overflow:hidden;
+  }
+  .day-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 14px;
+    background:#e2ecf7;
+    border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  .day-head .day-name{
+    font-weight:600;
+    font-size:1.02rem;
+    min-width:90px;
+  }
+  .day-head .date-field{
+    display:flex;align-items:center;gap:6px;
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.78rem;color:var(--ink-soft);
+  }
+  .day-head .date-field input{
+    font-family:inherit;
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:3px 6px;
+    font-size:.8rem;
+    width:130px;
+  }
+  .holiday-toggle{
+    display:flex;align-items:center;gap:6px;
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.75rem;
+    color:var(--holiday);
+    cursor:pointer;
+    user-select:none;
+  }
+  .holiday-toggle input{transform:scale(1.05);}
+
+  .slots{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+  }
+  @media (max-width:720px){
+    .slots{grid-template-columns:1fr 1fr;}
+  }
+  .slot{
+    padding:10px 12px;
+    border-right:1px solid var(--line);
+    border-top:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    min-height:96px;
+  }
+  .slot:nth-child(4n){border-right:none;}
+  .slot .time{
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.68rem;
+    color:var(--ink-soft);
+  }
+  .slot .subj{
+    font-size:.92rem;
+    font-weight:500;
+    line-height:1.2;
+  }
+  .slot select{
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.78rem;
+    padding:3px 4px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .toggle-row{
+    margin-top:auto;
+    display:flex;
+    gap:6px;
+  }
+  .cell-toggle{
+    flex:1;
+    border:1.5px solid var(--line);
+    border-radius:5px;
+    background:#fff;
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.85rem;
+    padding:6px 0;
+    cursor:pointer;
+    color:var(--ink-soft);
+    transition:background .12s,border-color .12s,color .12s;
+  }
+  .cell-toggle[data-state="present"]{
+    background:var(--present-bg);
+    border-color:var(--present);
+    color:var(--present);
+    font-weight:600;
+  }
+  .cell-toggle[data-state="absent"]{
+    background:var(--absent-bg);
+    border-color:var(--absent);
+    color:var(--absent);
+    font-weight:600;
+  }
+  .cell-toggle[data-state="holiday"]{
+    background:var(--holiday-bg);
+    border-color:var(--holiday);
+    color:var(--holiday);
+    font-weight:600;
+  }
+  .slot.is-holiday{background:#f0f6fb;}
+
+  /* Log */
+  .log-wrap{
+    margin-top:26px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:var(--card);
+    overflow:hidden;
+  }
+  .log-toggle{
+    width:100%;
+    text-align:left;
+    background:#e2ecf7;
+    border:none;
+    padding:12px 16px;
+    font-family: 'Iowan Old Style',Georgia,serif;
+    font-size:1rem;
+    font-weight:600;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .log-toggle .chev{
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.8rem;
+    transition:transform .15s;
+  }
+  .log-body{
+    padding:14px 16px 18px;
+    display:none;
+  }
+  .log-body.open{display:block;}
+  table.log-table{
+    width:100%;
+    border-collapse:collapse;
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.85rem;
+  }
+  table.log-table th{
+    text-align:left;
+    font-size:.72rem;
+    color:var(--ink-soft);
+    font-weight:600;
+    padding:6px 8px;
+    border-bottom:2px solid var(--rail);
+  }
+  table.log-table td{
+    padding:7px 8px;
+    border-bottom:1px solid var(--line);
+  }
+  table.log-table td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .pct-bar{
+    display:inline-block;
+    height:6px;
+    background:var(--present);
+    border-radius:3px;
+    vertical-align:middle;
+    margin-right:6px;
+  }
+  .pct-track{
+    display:inline-block;
+    width:60px;
+    height:6px;
+    background:#dae7f0;
+    border-radius:3px;
+    position:relative;
+    vertical-align:middle;
+  }
+  .pct-track .fill{
+    position:absolute;left:0;top:0;height:100%;
+    background:var(--present);
+    border-radius:3px;
+  }
+  .pct-low .fill{background:var(--absent);}
+  .pct-mid .fill{background:var(--holiday);}
+
+  footer.actions{
+    margin-top:22px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  footer.actions button{
+    background:var(--rail);
+    color:#fff;
+    border:none;
+    padding:9px 16px;
+    border-radius:5px;
+    font-size:.82rem;
+    cursor:pointer;
+  }
+  footer.actions button.secondary{
+    background:#fff;
+    color:var(--rail);
+    border:1.5px solid var(--rail);
+  }
+  footer.actions button:hover{opacity:.85;}
+  footer.actions input[type=file]{display:none;}
+  .save-note{
+    font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-size:.72rem;
+    color:var(--ink-soft);
+    margin-top:8px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <h1>Attendance Tracker</h1>
+      <div class="sub">Lt. Bisahu Das Mahant Memorial Medical College Korba · MBBS Phase II</div>
+    </div>
+    <div class="month-field-wrap">
+      <div class="month-field">
+        <div>
+          <label for="monthSelect">Month</label>
+          <select id="monthSelect"></select>
+        </div>
+        <button type="button" class="add-month-btn" id="addMonthBtn" title="Add new month" aria-label="Add new month">+</button>
+      </div>
+      <div class="new-month-row" id="newMonthRow">
+        <input type="text" id="newMonthInput" placeholder="e.g. November 2026">
+        <button type="button" id="confirmMonthBtn">Add</button>
+        <button type="button" class="cancel" id="cancelMonthBtn">Cancel</button>
+      </div>
+    </div>
+    <div class="week-nav">
+      <button id="prevWeek" aria-label="Previous week">‹</button>
+      <span class="label" id="weekLabel">Week 1</span>
+      <button id="nextWeek" aria-label="Next week">›</button>
+    </div>
+  </header>
+
+  <div id="grid"></div>
+
+  <footer class="actions">
+    <button id="exportBtn">Export JSON</button>
+    <button class="secondary" id="importBtn">Import JSON</button>
+    <input type="file" id="importFile" accept="application/json">
+    <button class="secondary" id="resetWeekBtn">Clear this week</button>
+  </footer>
+  <div class="save-note">Saved automatically to this browser (localStorage). Export a backup regularly if you use more than one device.</div>
+
+  <div class="log-wrap">
+    <button class="log-toggle" id="logToggle">
+      <span>Attendance log — running totals by subject</span>
+      <span class="chev" id="logChev">▾</span>
+    </button>
+    <div class="log-body" id="logBody">
+      <table class="log-table">
+        <thead>
+          <tr><th>Subject</th><th style="text-align:right">Held</th><th style="text-align:right">Present</th><th style="text-align:right">Absent</th><th>Attendance</th></tr>
+        </thead>
+        <tbody id="logTbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "attendanceTracker_v1";
+
+  var SUBJECTS = ["Psychiatry","Anesthesiology","Pediatrics","Radiotherapy","Ophthal","Medicine","OBG","Surgery","Orthopaedics","Dermatology","Respiratory Medicine","ENT","AETCOM","Clinical Posting"];
+
+  var DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+  // schedule definition: each day -> 4 slots
+  var SCHEDULE = {
+    Monday: [
+      {time:"8AM – 9AM", type:"dropdown", options:["Psychiatry","Anesthesiology","Pediatrics"]},
+      {time:"9AM – 12PM", type:"fixed", subject:"Clinical Posting"},
+      {time:"12PM – 1PM", type:"dropdown", options:["Radiotherapy","Ophthal"]},
+      {time:"2PM – 4PM", type:"auto"} // ENT on wk1/3, Ophthal on wk2/4
+    ],
+    Tuesday: [
+      {time:"8AM – 9AM", type:"fixed", subject:"Medicine"},
+      {time:"9AM – 12PM", type:"fixed", subject:"Clinical Posting"},
+      {time:"12PM – 1PM", type:"fixed", subject:"Pediatrics"},
+      {time:"2PM – 4PM", type:"fixed", subject:"OBG"}
+    ],
+    Wednesday: [
+      {time:"8AM – 9AM", type:"fixed", subject:"Surgery"},
+      {time:"9AM – 12PM", type:"fixed", subject:"Clinical Posting"},
+      {time:"12PM – 1PM", type:"fixed", subject:"Medicine"},
+      {time:"2PM – 4PM", type:"dropdown", options:["Respiratory Medicine","Psychiatry","Radiotherapy","Dermatology","Medicine"], label:"Medicine and allied"}
+    ],
+    Thursday: [
+      {time:"8AM – 9AM", type:"fixed", subject:"OBG"},
+      {time:"9AM – 12PM", type:"fixed", subject:"Clinical Posting"},
+      {time:"12PM – 1PM", type:"fixed", subject:"Surgery"},
+      {time:"2PM – 4PM", type:"dropdown", options:["Orthopaedics","Anesthesiology","Surgery"], label:"Surgery and allied"}
+    ],
+    Friday: [
+      {time:"8AM – 9AM", type:"dropdown", options:["Orthopaedics","Surgery"]},
+      {time:"9AM – 12PM", type:"fixed", subject:"Clinical Posting"},
+      {time:"12PM – 1PM", type:"fixed", subject:"OBG"},
+      {time:"2PM – 4PM", type:"fixed", subject:"Pediatrics"}
+    ],
+    Saturday: [
+      {time:"8AM – 9AM", type:"dropdown", options:["Dermatology","OBG"]},
+      {time:"9AM – 12PM", type:"fixed", subject:"Clinical Posting"},
+      {time:"12PM – 1PM", type:"dropdown", options:["Respiratory Medicine","ENT"]},
+      {time:"2PM – 4PM", type:"fixed", subject:"AETCOM"}
+    ]
+  };
+
+  // ---------- storage ----------
+  function loadStore(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return {weeks:{}, currentWeek:1, currentMonth:"", months:[]};
+      var parsed = JSON.parse(raw);
+      if(!parsed.weeks) parsed.weeks = {};
+      if(!parsed.currentWeek) parsed.currentWeek = 1;
+      if(typeof parsed.currentMonth !== "string") parsed.currentMonth = "";
+      if(!Array.isArray(parsed.months)) parsed.months = [];
+      return parsed;
+    }catch(e){
+      return {weeks:{}, currentWeek:1, currentMonth:"", months:[]};
+    }
+  }
+  function saveStore(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  }
+
+  var store = loadStore();
+
+  // Backfill months list from any legacy saved weeks / current month
+  (function migrateMonths(){
+    var found = {};
+    store.months.forEach(function(m){ found[m] = true; });
+    Object.keys(store.weeks).forEach(function(key){
+      var m = key.split("__W")[0];
+      if(m && m !== "unset" && !found[m]){
+        found[m] = true;
+        store.months.push(m);
+      }
+    });
+    if(store.currentMonth && !found[store.currentMonth]){
+      store.months.push(store.currentMonth);
+    }
+    if(!store.currentMonth && store.months.length){
+      store.currentMonth = store.months[0];
+    }
+    saveStore();
+  })();
+
+  function weekKey(month, weekNum){
+    return (month || "unset") + "__W" + weekNum;
+  }
+
+  function getWeekData(){
+    var key = weekKey(store.currentMonth, store.currentWeek);
+    if(!store.weeks[key]){
+      store.weeks[key] = { dates:{}, dayHoliday:{}, cells:{} };
+    }
+    return store.weeks[key];
+  }
+
+  // cell id: Day_slotIndex
+  function cellId(day, idx){ return day + "_" + idx; }
+
+  // ---------- rendering ----------
+  var gridEl = document.getElementById("grid");
+  var monthSelect = document.getElementById("monthSelect");
+  var weekLabel = document.getElementById("weekLabel");
+
+  function autoSlotSubject(weekNum){
+    return (weekNum === 1 || weekNum === 3 || weekNum === 5) ? "ENT" : "Ophthal";
+  }
+
+  function renderGrid(){
+    gridEl.innerHTML = "";
+    var wd = getWeekData();
+
+    DAYS.forEach(function(day){
+      var dayBlock = document.createElement("div");
+      dayBlock.className = "day-block";
+
+      // head
+      var head = document.createElement("div");
+      head.className = "day-head";
+
+      var nameEl = document.createElement("div");
+      nameEl.className = "day-name";
+      nameEl.textContent = day;
+      head.appendChild(nameEl);
+
+      var dateField = document.createElement("div");
+      dateField.className = "date-field";
+      var dateLabel = document.createElement("label");
+      dateLabel.textContent = "Date:";
+      dateLabel.setAttribute("for","date_"+day);
+      var dateInput = document.createElement("input");
+      dateInput.type = "text";
+      dateInput.id = "date_"+day;
+      dateInput.placeholder = "e.g. 05";
+      dateInput.value = wd.dates[day] || "";
+      dateInput.addEventListener("input", function(){
+        wd.dates[day] = dateInput.value;
+        saveStore();
+      });
+      dateField.appendChild(dateLabel);
+      dateField.appendChild(dateInput);
+      head.appendChild(dateField);
+
+      var holidayLabel = document.createElement("label");
+      holidayLabel.className = "holiday-toggle";
+      var holidayCheckbox = document.createElement("input");
+      holidayCheckbox.type = "checkbox";
+      holidayCheckbox.checked = !!wd.dayHoliday[day];
+      holidayCheckbox.addEventListener("change", function(){
+        wd.dayHoliday[day] = holidayCheckbox.checked;
+        if(holidayCheckbox.checked){
+          SCHEDULE[day].forEach(function(_, idx){
+            setCellState(day, idx, "holiday");
+          });
+        }
+        saveStore();
+        renderGrid();
+        renderLog();
+      });
+      var holidaySpan = document.createElement("span");
+      holidaySpan.textContent = "Holiday (whole day)";
+      holidayLabel.appendChild(holidayCheckbox);
+      holidayLabel.appendChild(holidaySpan);
+      head.appendChild(holidayLabel);
+
+      dayBlock.appendChild(head);
+
+      // slots
+      var slotsWrap = document.createElement("div");
+      slotsWrap.className = "slots";
+
+      SCHEDULE[day].forEach(function(slotDef, idx){
+        var slotEl = document.createElement("div");
+        slotEl.className = "slot";
+
+        var id = cellId(day, idx);
+        var cellData = wd.cells[id] || {state:"", subject: slotDef.type==="fixed" ? slotDef.subject : (slotDef.type==="auto" ? autoSlotSubject(store.currentWeek) : "")};
+
+        if(cellData.state === "holiday") slotEl.classList.add("is-holiday");
+
+        var timeEl = document.createElement("div");
+        timeEl.className = "time";
+        timeEl.textContent = slotDef.time;
+        slotEl.appendChild(timeEl);
+
+        if(slotDef.type === "fixed"){
+          var subjEl = document.createElement("div");
+          subjEl.className = "subj";
+          subjEl.textContent = slotDef.subject;
+          slotEl.appendChild(subjEl);
+        } else if(slotDef.type === "auto"){
+          var autoSubj = autoSlotSubject(store.currentWeek);
+          var subjEl2 = document.createElement("div");
+          subjEl2.className = "subj";
+          subjEl2.textContent = autoSubj + " (auto)";
+          slotEl.appendChild(subjEl2);
+          if(cellData.subject !== autoSubj){
+            cellData.subject = autoSubj;
+            wd.cells[id] = cellData;
+          }
+        } else if(slotDef.type === "dropdown"){
+          if(slotDef.label){
+            var lbl = document.createElement("div");
+            lbl.className = "subj";
+            lbl.style.fontSize = ".78rem";
+            lbl.style.color = "var(--ink-soft)";
+            lbl.textContent = slotDef.label;
+            slotEl.appendChild(lbl);
+          }
+          var sel = document.createElement("select");
+          var blankOpt = document.createElement("option");
+          blankOpt.value = "";
+          blankOpt.textContent = "Select subject…";
+          sel.appendChild(blankOpt);
+          slotDef.options.forEach(function(opt){
+            var o = document.createElement("option");
+            o.value = opt;
+            o.textContent = opt;
+            if(cellData.subject === opt) o.selected = true;
+            sel.appendChild(o);
+          });
+          sel.addEventListener("change", function(){
+            cellData.subject = sel.value;
+            wd.cells[id] = cellData;
+            saveStore();
+            renderLog();
+          });
+          slotEl.appendChild(sel);
+        }
+
+        // toggle row
+        var toggleRow = document.createElement("div");
+        toggleRow.className = "toggle-row";
+        var btn = document.createElement("button");
+        btn.className = "cell-toggle";
+        btn.type = "button";
+        btn.dataset.state = cellData.state || "";
+        btn.textContent = stateLabel(cellData.state);
+        btn.addEventListener("click", function(){
+          var next = nextState(cellData.state);
+          setCellState(day, idx, next);
+          saveStore();
+          renderGrid();
+          renderLog();
+        });
+        toggleRow.appendChild(btn);
+        slotEl.appendChild(toggleRow);
+
+        slotsWrap.appendChild(slotEl);
+        wd.cells[id] = cellData;
+      });
+
+      dayBlock.appendChild(slotsWrap);
+      gridEl.appendChild(dayBlock);
+    });
+  }
+
+  function stateLabel(state){
+    if(state === "present") return "✓ Present";
+    if(state === "absent") return "✗ Absent";
+    if(state === "holiday") return "⊘ Holiday";
+    return "Mark";
+  }
+  function nextState(state){
+    if(state === "") return "present";
+    if(state === "present") return "absent";
+    if(state === "absent") return "holiday";
+    return "";
+  }
+  function setCellState(day, idx, state){
+    var wd = getWeekData();
+    var id = cellId(day, idx);
+    var slotDef = SCHEDULE[day][idx];
+    var existing = wd.cells[id] || {state:"", subject: slotDef.type==="fixed" ? slotDef.subject : (slotDef.type==="auto" ? autoSlotSubject(store.currentWeek) : "")};
+    existing.state = state;
+    wd.cells[id] = existing;
+  }
+
+  // ---------- log ----------
+  function computeTotals(){
+    var totals = {};
+    SUBJECTS.forEach(function(s){ totals[s] = {held:0, present:0, absent:0}; });
+
+    Object.keys(store.weeks).forEach(function(wk){
+      var wd = store.weeks[wk];
+      Object.keys(wd.cells).forEach(function(id){
+        var cell = wd.cells[id];
+        if(!cell || !cell.state || cell.state === "holiday") return;
+        var subj = cell.subject;
+        if(!subj || totals[subj] === undefined) return;
+        totals[subj].held++;
+        if(cell.state === "present") totals[subj].present++;
+        if(cell.state === "absent") totals[subj].absent++;
+      });
+    });
+    return totals;
+  }
+
+  function renderLog(){
+    var totals = computeTotals();
+    var tbody = document.getElementById("logTbody");
+    tbody.innerHTML = "";
+    SUBJECTS.forEach(function(subj){
+      var t = totals[subj];
+      var pct = t.held > 0 ? Math.round((t.present / t.held) * 1000) / 10 : null;
+      var tr = document.createElement("tr");
+
+      var tdName = document.createElement("td");
+      tdName.textContent = subj;
+      tr.appendChild(tdName);
+
+      var tdHeld = document.createElement("td");
+      tdHeld.className = "num";
+      tdHeld.textContent = t.held;
+      tr.appendChild(tdHeld);
+
+      var tdPresent = document.createElement("td");
+      tdPresent.className = "num";
+      tdPresent.textContent = t.present;
+      tr.appendChild(tdPresent);
+
+      var tdAbsent = document.createElement("td");
+      tdAbsent.className = "num";
+      tdAbsent.textContent = t.absent;
+      tr.appendChild(tdAbsent);
+
+      var tdPct = document.createElement("td");
+      if(pct === null){
+        tdPct.textContent = "—";
+      } else {
+        var track = document.createElement("span");
+        track.className = "pct-track" + (pct < 75 ? " pct-low" : (pct < 85 ? " pct-mid" : ""));
+        var fill = document.createElement("span");
+        fill.className = "fill";
+        fill.style.width = Math.min(pct,100) + "%";
+        track.appendChild(fill);
+        tdPct.appendChild(track);
+        var pctText = document.createElement("span");
+        pctText.textContent = " " + pct + "%";
+        pctText.style.fontVariantNumeric = "tabular-nums";
+        tdPct.appendChild(pctText);
+      }
+      tr.appendChild(tdPct);
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ---------- header controls ----------
+  function renderMonthOptions(){
+    monthSelect.innerHTML = "";
+    if(store.months.length === 0){
+      var placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "No months yet — tap +";
+      monthSelect.appendChild(placeholder);
+      return;
+    }
+    store.months.forEach(function(m){
+      var o = document.createElement("option");
+      o.value = m;
+      o.textContent = m;
+      if(m === store.currentMonth) o.selected = true;
+      monthSelect.appendChild(o);
+    });
+  }
+  renderMonthOptions();
+
+  monthSelect.addEventListener("change", function(){
+    store.currentMonth = monthSelect.value;
+    store.currentWeek = 1;
+    saveStore();
+    updateWeekLabel();
+    renderGrid();
+    renderLog();
+  });
+
+  var newMonthRow = document.getElementById("newMonthRow");
+  var newMonthInput = document.getElementById("newMonthInput");
+
+  document.getElementById("addMonthBtn").addEventListener("click", function(){
+    newMonthRow.classList.add("open");
+    newMonthInput.value = "";
+    newMonthInput.focus();
+  });
+
+  document.getElementById("cancelMonthBtn").addEventListener("click", function(){
+    newMonthRow.classList.remove("open");
+    newMonthInput.value = "";
+  });
+
+  function commitNewMonth(){
+    var name = newMonthInput.value.trim();
+    if(!name) return;
+    if(store.months.indexOf(name) === -1){
+      store.months.push(name);
+    }
+    store.currentMonth = name;
+    store.currentWeek = 1;
+    saveStore();
+    renderMonthOptions();
+    updateWeekLabel();
+    renderGrid();
+    renderLog();
+    newMonthRow.classList.remove("open");
+    newMonthInput.value = "";
+  }
+
+  document.getElementById("confirmMonthBtn").addEventListener("click", commitNewMonth);
+  newMonthInput.addEventListener("keydown", function(e){
+    if(e.key === "Enter"){
+      e.preventDefault();
+      commitNewMonth();
+    } else if(e.key === "Escape"){
+      newMonthRow.classList.remove("open");
+      newMonthInput.value = "";
+    }
+  });
+
+  function updateWeekLabel(){
+    weekLabel.textContent = "Week " + store.currentWeek;
+  }
+  updateWeekLabel();
+
+  document.getElementById("prevWeek").addEventListener("click", function(){
+    store.currentWeek = store.currentWeek <= 1 ? 5 : store.currentWeek - 1;
+    saveStore();
+    updateWeekLabel();
+    renderGrid();
+    renderLog();
+  });
+  document.getElementById("nextWeek").addEventListener("click", function(){
+    store.currentWeek = store.currentWeek >= 5 ? 1 : store.currentWeek + 1;
+    saveStore();
+    updateWeekLabel();
+    renderGrid();
+    renderLog();
+  });
+
+  // ---------- log collapse ----------
+  var logToggle = document.getElementById("logToggle");
+  var logBody = document.getElementById("logBody");
+  var logChev = document.getElementById("logChev");
+  logToggle.addEventListener("click", function(){
+    var open = logBody.classList.toggle("open");
+    logChev.style.transform = open ? "rotate(180deg)" : "rotate(0deg)";
+  });
+
+  // ---------- export / import ----------
+  document.getElementById("exportBtn").addEventListener("click", function(){
+    var blob = new Blob([JSON.stringify(store, null, 2)], {type:"application/json"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    var stamp = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = "attendance-tracker-backup-" + stamp + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  var importFile = document.getElementById("importFile");
+  document.getElementById("importBtn").addEventListener("click", function(){
+    importFile.click();
+  });
+  importFile.addEventListener("change", function(){
+    var file = importFile.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var parsed = JSON.parse(e.target.result);
+        if(!parsed.weeks) throw new Error("Invalid file");
+        store = parsed;
+        if(!store.currentWeek) store.currentWeek = 1;
+        if(typeof store.currentMonth !== "string") store.currentMonth = "";
+        if(!Array.isArray(store.months)) store.months = [];
+        Object.keys(store.weeks).forEach(function(key){
+          var m = key.split("__W")[0];
+          if(m && m !== "unset" && store.months.indexOf(m) === -1) store.months.push(m);
+        });
+        if(store.currentMonth && store.months.indexOf(store.currentMonth) === -1) store.months.push(store.currentMonth);
+        saveStore();
+        renderMonthOptions();
+        updateWeekLabel();
+        renderGrid();
+        renderLog();
+        alert("Import complete.");
+      }catch(err){
+        alert("Could not read this file. Make sure it's a JSON export from this tracker.");
+      }
+    };
+    reader.readAsText(file);
+    importFile.value = "";
+  });
+
+  document.getElementById("resetWeekBtn").addEventListener("click", function(){
+    if(!confirm("Clear all entries for the currently displayed week? This can't be undone.")) return;
+    var key = weekKey(store.currentMonth, store.currentWeek);
+    delete store.weeks[key];
+    saveStore();
+    renderGrid();
+    renderLog();
+  });
+
+  // ---------- init ----------
+  renderGrid();
+  renderLog();
+
+})();
+</script>
+</body>
+</html>
